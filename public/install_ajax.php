@@ -117,6 +117,10 @@ switch ($step) {
     // -------------------------------------------------------------
     case "composer":
 
+        $projectPath = $base;
+        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+
+        // Detect Composer
         $composer = find_composer();
         if (!$composer) {
             send([
@@ -127,23 +131,46 @@ switch ($step) {
             ]);
         }
 
-        $projectPath = $base;
-        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
-
+        // Run Composer install
         $cmd = $isWindows
-            ? "cd /d \"$projectPath\" && $composer install --no-interaction --prefer-dist 2>&1"
-            : "cd \"$projectPath\" && $composer install --no-interaction --prefer-dist 2>&1";
+            ? "cd /d \"$projectPath\" && $composer install --no-interaction --prefer-dist"
+            : "cd \"$projectPath\" && $composer install --no-interaction --prefer-dist";
 
-        $out = run_cmd($cmd);
+        // Run synchronously and capture output
+        $output = [];
+        $returnVar = 0;
+        exec($cmd . " 2>&1", $output, $returnVar);
+
+        $outText = implode("\n", $output);
+
+        if ($returnVar !== 0) {
+            send([
+                "success" => false,
+                "output"  => "❌ Composer install failed:<br><pre>" . htmlspecialchars($outText) . "</pre>",
+                "percent" => 10,
+                "next"    => "composer"
+            ]);
+        }
+
+        // Ensure vendor folder exists
+        if (!is_dir($projectPath . "/vendor")) {
+            send([
+                "success" => false,
+                "output"  => "❌ Vendor folder not created.<br>Check server permissions.",
+                "percent" => 10,
+                "next"    => "composer"
+            ]);
+        }
 
         send([
             "success" => true,
-            "output"  => nl2br($out),
+            "output"  => "✔ Composer installed successfully.<br><pre>" . htmlspecialchars($outText) . "</pre>",
             "percent" => 40,
             "next"    => "db_config",
             "show_db_form" => true
         ]);
         break;
+
 
     // -------------------------------------------------------------
     // 3) CREATE .env FILE
