@@ -132,9 +132,15 @@ try {
                 ]);
             }
 
-            $cmd = "cd \"$base\" && $composerCmd install --no-interaction --prefer-dist 2>&1";
-            $output = shell_exec($cmd);
+            $isWindows = strtoupper(substr(PHP_OS,0,3))==="WIN";
+            if($isWindows){
+                $cmd = "cd /d \"$base\" && $composerCmd install --no-interaction --prefer-dist";
+            } else {
+                if(!is_dir("/tmp/composer")) mkdir("/tmp/composer",0777,true);
+                $cmd = "HOME=/tmp COMPOSER_HOME=/tmp cd \"$base\" && $composerCmd install --no-interaction --prefer-dist";
+            }
 
+            $output = shell_exec($cmd);
             if($output === null){
                 send([
                     "success" => false,
@@ -149,8 +155,8 @@ try {
                 "success" => true,
                 "output" => "✔ Composer completed<br><pre>".htmlspecialchars($output)."</pre>",
                 "percent" => 20,
-                "next" => "db_config",
-                "show_db_form" => false
+                "next" => "db_save",
+                "show_db_form" => true
             ]);
             break;
 
@@ -160,7 +166,7 @@ try {
                     "success" => false,
                     "output" => "❌ DB configuration missing",
                     "percent" => 40,
-                    "next" => "db_config",
+                    "next" => "db_save",
                     "show_db_form" => true
                 ]);
             }
@@ -237,7 +243,7 @@ try {
         default:
             send([
                 "success" => false,
-                "output" => "Unknown step: $step",
+                "output" => "❌ Unknown step: $step",
                 "percent" => 0,
                 "next" => "check",
                 "show_db_form" => false
