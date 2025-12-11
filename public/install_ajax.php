@@ -108,7 +108,6 @@ try {
             exit;
 
         case 'composer':
-
             ini_set('max_execution_time', 3000);
             ini_set('memory_limit', '2G');
 
@@ -122,23 +121,25 @@ try {
                 $cmd = "cd /d \"$projectPath\" && $composerCmd update --no-interaction --prefer-dist --ignore-platform-reqs 2>&1";
             }
 
-            echo "Running Composer...<br>";
+            $output = "Running Composer...\n";
             $res = shell_exec($cmd);
             if ($res === null) {
-                throw new Exception("Composer cannot run (shell_exec disabled or permission issue)");
+                $output .= "Composer cannot run (shell_exec disabled or permission issue)\n";
+            } else {
+                $output .= $res;
+                $output .= "\n✔ Composer completed";
             }
-            echo "<pre>$res</pre>";
-            echo "✔ Composer completed<br>";
 
             $next = "db_config";
 
-
+            // send JSON for AJAX
             echo json_encode([
-                'message' => "Composer completed.<br><pre>$output</pre>",
+                'message' => $output,
                 'show_db_form' => false,
-                'next' => nextStep($step)
+                'next' => $next
             ]);
             exit;
+
 
         case 'db_config':
             // Show DB form if config not exists
