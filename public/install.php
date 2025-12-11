@@ -120,21 +120,25 @@ try {
 
         case 'check':
 
-            out("<strong>System Requirements Check</strong><br><br>");
 
+            out("<strong>System Requirements Check</strong><br><br>");
             $allGood = true;
 
-            // PHP VERSION
+            // --------------------
+            // 1️⃣ PHP Version
+            // --------------------
             $minPhp = "8.0";
             $currentPhp = phpversion();
             if (version_compare($currentPhp, $minPhp, '>=')) {
-                out("✔ PHP Version OK ($currentPhp) <br>");
+                out("✔ PHP Version OK ($currentPhp)<br>");
             } else {
-                out("❌ PHP $minPhp or higher required — current: $currentPhp <br>");
+                out("❌ PHP $minPhp or higher required — current: $currentPhp<br>");
                 $allGood = false;
             }
 
-            // REQUIRED EXTENSIONS
+            // --------------------
+            // 2️⃣ PHP Extensions
+            // --------------------
             $requiredExtensions = [
                 'pdo',
                 'pdo_mysql',
@@ -146,11 +150,12 @@ try {
                 'json',
                 'bcmath',
                 'fileinfo',
-                'curl'
+                'curl',
+                'gd',
+                'zip'
             ];
 
             out("<br><strong>PHP Extensions:</strong><br>");
-
             foreach ($requiredExtensions as $ext) {
                 if (extension_loaded($ext)) {
                     out("✔ $ext enabled<br>");
@@ -160,37 +165,120 @@ try {
                 }
             }
 
-            // SERVER OS TYPE
-            $os = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'Windows / XAMPP' : 'Linux / Ubuntu';
-            out("<br><strong>Server:</strong> $os<br>");
-
-            // ----------------------------
-            // FIXED COMPOSER DETECTION
-            // ----------------------------
+            // --------------------
+            // 3️⃣ Composer check
+            // --------------------
+            $composerGlobal = trim(shell_exec('which composer') ?: shell_exec('where composer'));
             out("<br><strong>Composer:</strong><br>");
-
-            $composerLocal = __DIR__ . '/composer.phar';
-
-            if (file_exists($composerLocal)) {
-                out("✔ composer.phar found (local)<br>");
-            } elseif (shell_exec("composer --version 2>/dev/null")) {
-                out("✔ Global Composer detected<br>");
+            if ($composerGlobal) {
+                out("✔ Composer found: $composerGlobal<br>");
             } else {
-                out("❌ Composer not found — install global Composer or upload composer.phar<br>");
+                out("❌ Composer not found — install globally or upload composer.phar<br>");
                 $allGood = false;
             }
 
-            out("<br><strong>Result:</strong><br>");
+            // --------------------
+            // 4️⃣ Git safe.directory check
+            // --------------------
+            $projectPath = realpath(__DIR__ . '/..');
+            $gitSafe = shell_exec("git config --global --get-all safe.directory | grep '$projectPath'");
+            if (!$gitSafe) {
+                out("⚠ Git safe.directory not set — run: <code>git config --global --add safe.directory $projectPath</code><br>");
+            } else {
+                out("✔ Git safe.directory OK<br>");
+            }
 
+            // --------------------
+            // Required folders & files
+            // --------------------
+            $pathsToCheck = [
+                __DIR__ . '/../storage' => 'storage/',
+                __DIR__ . '/../bootstrap/cache' => 'bootstrap/cache/',
+                __DIR__ . '/../.env' => '.env file',
+                __DIR__ . '/../vendor' => 'vendor folder'
+            ];
+
+            $outSystemOS = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'Windows' : 'Linux';
+
+            out("<br><strong>Folders & Files Check:</strong><br>");
+            foreach ($pathsToCheck as $path => $label) {
+
+                $isFolder = str_ends_with($label, '/');
+
+                if (($isFolder && is_dir($path)) || (!$isFolder && is_file($path))) {
+                    // Exists
+                    if ($isFolder) {
+                        if (!is_writable($path)) {
+                            out("❌ $label exists but is NOT writable — attempting to fix permissions...<br>");
+                            if ($outSystemOS === 'Linux' && chmod($path, 0775)) {
+                                out("⚡ Permissions set to 775<br>");
+                            } else {
+                                $allGood = false;
+                            }
+                        } else {
+                            out("✔ $label exists and is writable<br>");
+                        }
+                    } else {
+                        out("✔ $label exists<br>");
+                    }
+                } else {
+                    // Does not exist, create
+                    if ($isFolder) {
+                        if (mkdir($path, 0777, true)) {
+                            out("⚡ $label folder did not exist and was created.<br>");
+                            if ($outSystemOS === 'Linux' && chmod($path, 0775)) {
+                                out("⚡ Permissions set to 775<br>");
+                            }
+                        } else {
+                            out("❌ Failed to create $label folder.<br>");
+                            $allGood = false;
+                            continue;
+                        }
+                    } else {
+                        // It's a file like .env
+                        if (file_put_contents($path, '') !== false) {
+                            out("⚡ $label did not exist and was created.<br>");
+                        } else {
+                            out("❌ Failed to create $label.<br>");
+                            $allGood = false;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            // --------------------
+            // 6️⃣ Composer Extensions Required
+            // --------------------
+            $composerReqs = ['ext-gd', 'ext-curl'];
+            foreach ($composerReqs as $ext) {
+                $extName = str_replace('ext-', '', $ext);
+                if (!extension_loaded($extName)) {
+                    out("⚠ Composer requires $extName extension<br>");
+                    $allGood = false;
+                }
+            }
+
+            // --------------------
+            // 7️⃣ Server OS
+            // --------------------
+            $os = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'Windows / XAMPP' : 'Linux / Ubuntu';
+            out("<br><strong>Server:</strong> $os<br>");
+
+            // --------------------
+            // Final Result & Continue Button
+            // --------------------
+            out("<br><strong>Result:</strong><br>");
             if ($allGood) {
                 out("✔ All requirements satisfied.<br>");
                 echo "<br><a class='button' href='?step=" . nextStep($current) . "'>Continue</a>";
             } else {
-                out("<br>❌ Some requirements failed.<br>Please fix above issues and refresh this page.<br>");
+                out("❌ Some requirements failed.<br>Please fix the issues above and refresh this page.<br>");
             }
 
             echo "</div></div></body></html>";
             exit;
+
 
         case 'composer':
 
