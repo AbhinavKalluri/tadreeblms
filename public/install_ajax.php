@@ -183,49 +183,44 @@ try {
             exit;
 
         case 'key':
-            system("php $basePath/artisan key:generate --force", $ret);
-            if ($ret !== 0) fail("APP_KEY generation failed");
+            // Capture artisan output
+            $output = [];
+            $ret = 0;
+            exec("php $basePath/artisan key:generate --force 2>&1", $output, $ret);
+            if ($ret !== 0) fail("APP_KEY generation failed:\n" . implode("\n", $output));
 
             echo json_encode([
-                'message' => '✔ APP_KEY generated',
+                'message' => "✔ APP_KEY generated\n" . implode("\n", $output),
                 'show_db_form' => false,
                 'next' => nextStep($step)
             ]);
             exit;
 
         case 'migrate':
-            system("php $basePath/artisan migrate --force", $ret);
-            if ($ret !== 0) fail("Migration failed");
+            $output = [];
+            $ret = 0;
+            exec("php $basePath/artisan migrate --force 2>&1", $output, $ret);
+            if ($ret !== 0) fail("Migration failed:\n" . implode("\n", $output));
 
             file_put_contents($migrationDoneFile, "done");
 
             echo json_encode([
-                'message' => '✔ Migrations completed',
+                'message' => "✔ Migrations completed\n" . implode("\n", $output),
                 'show_db_form' => false,
                 'next' => nextStep($step)
             ]);
             exit;
 
         case 'seed':
-            system("php $basePath/artisan db:seed --force", $ret);
-            if ($ret !== 0) fail("Seeding failed");
+            $output = [];
+            $ret = 0;
+            exec("php $basePath/artisan db:seed --force 2>&1", $output, $ret);
+            if ($ret !== 0) fail("Seeding failed:\n" . implode("\n", $output));
 
             file_put_contents($seedDoneFile, "done");
 
             echo json_encode([
-                'message' => '✔ Database seeded',
-                'show_db_form' => false,
-                'next' => nextStep($step)
-            ]);
-            exit;
-
-        case 'permissions':
-            // For Linux: chmod storage & bootstrap/cache
-            @chmod($basePath . '/storage', 0775);
-            @chmod($basePath . '/bootstrap/cache', 0775);
-
-            echo json_encode([
-                'message' => '✔ Permissions set',
+                'message' => "✔ Database seeded\n" . implode("\n", $output),
                 'show_db_form' => false,
                 'next' => nextStep($step)
             ]);
@@ -233,7 +228,7 @@ try {
 
         case 'finish':
             file_put_contents($installedFlag, "installed");
-            // Set APP_INSTALLED=true
+
             $env = file_get_contents($envFile);
             if (str_contains($env, 'APP_INSTALLED=')) {
                 $env = preg_replace('/APP_INSTALLED=.*/', 'APP_INSTALLED=true', $env);
@@ -243,8 +238,9 @@ try {
             file_put_contents($envFile, $env);
 
             echo json_encode([
-                'message' => '✔ Installation complete! <a href="/">Open Application</a>',
-                'show_db_form' => false
+                'message' => "✔ Installation complete! <a href='/'>Open Application</a>",
+                'show_db_form' => false,
+                'next' => null
             ]);
             exit;
 
