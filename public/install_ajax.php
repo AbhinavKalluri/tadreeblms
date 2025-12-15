@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 
 /*
 |--------------------------------------------------------------------------
-| Base Paths (MUST BE FIRST)
+| Base Paths
 |--------------------------------------------------------------------------
 */
 $basePath = realpath(__DIR__ . '/..');
@@ -77,6 +77,8 @@ Then retry.
     }
 }
 
+$phpBin = '/usr/bin/php8.2'; // PHP 8.2 binary
+
 /*
 |--------------------------------------------------------------------------
 | Current Step
@@ -130,13 +132,7 @@ try {
 
     switch ($step) {
 
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK
-        |--------------------------------------------------------------------------
-        */
         case 'check':
-
             @unlink($envFile);
             @unlink($dbConfigFile);
             @unlink($migrationDoneFile);
@@ -145,10 +141,11 @@ try {
             $msg = "<strong>Checking system requirements...</strong><br>";
             $ok = true;
 
-            if (version_compare(PHP_VERSION, '8.2.0', '>=')) {
-                $msg .= "✔ PHP " . PHP_VERSION . " OK<br>";
+            // PHP 8.2.x check
+            if (version_compare(PHP_VERSION, '8.2.0', '>=') && version_compare(PHP_VERSION, '8.3.0', '<')) {
+                $msg .= "✔ PHP " . PHP_VERSION . " OK (8.2.x)<br>";
             } else {
-                $msg .= "❌ PHP 8.2+ required<br>";
+                $msg .= "❌ PHP 8.2.x required, current: " . PHP_VERSION . "<br>";
                 $ok = false;
             }
 
@@ -179,13 +176,7 @@ try {
             ]);
             exit;
 
-        /*
-        |--------------------------------------------------------------------------
-        | COMPOSER
-        |--------------------------------------------------------------------------
-        */
         case 'composer':
-
             if (!is_writable($basePath)) {
                 fail("
 Permission issue detected.<br><br>
@@ -198,9 +189,7 @@ sudo chmod -R 775 $basePath
             }
 
             $composer = trim(shell_exec('which composer'));
-            if (!$composer) {
-                fail("Composer not found in PATH");
-            }
+            if (!$composer) fail("Composer not found in PATH");
 
             $cmd = "cd \"$basePath\" && COMPOSER_HOME=/tmp HOME=/tmp $composer install --no-interaction --prefer-dist 2>&1";
             $output = shell_exec($cmd);
@@ -216,13 +205,7 @@ sudo chmod -R 775 $basePath
             ]);
             exit;
 
-        /*
-        |--------------------------------------------------------------------------
-        | DB CONFIG
-        |--------------------------------------------------------------------------
-        */
         case 'db_config':
-
             echo json_encode([
                 'message' => 'Please enter database info',
                 'show_db_form' => true,
@@ -230,26 +213,14 @@ sudo chmod -R 775 $basePath
             ]);
             exit;
 
-        /*
-        |--------------------------------------------------------------------------
-        | ENV
-        |--------------------------------------------------------------------------
-        */
         case 'env':
-
-            if (!file_exists($dbConfigFile)) {
-                fail("DB config missing");
-            }
+            if (!file_exists($dbConfigFile)) fail("DB config missing");
 
             $config = json_decode(file_get_contents($dbConfigFile), true);
 
-            if (!file_exists($basePath . '/.env.example')) {
-                fail(".env.example not found");
-            }
+            if (!file_exists($basePath . '/.env.example')) fail(".env.example not found");
 
-            if (!file_exists($envFile)) {
-                copy($basePath . '/.env.example', $envFile);
-            }
+            if (!file_exists($envFile)) copy($basePath . '/.env.example', $envFile);
 
             if (!is_writable($envFile)) {
                 fail("
@@ -275,16 +246,9 @@ sudo chmod 664 $envFile
             ]);
             exit;
 
-        /*
-        |--------------------------------------------------------------------------
-        | KEY
-        |--------------------------------------------------------------------------
-        */
         case 'key':
-
             blockIfNoVendor($basePath);
-
-            exec("php \"$basePath/artisan\" key:generate --force 2>&1", $out, $ret);
+            exec("$phpBin \"$basePath/artisan\" key:generate --force 2>&1", $out, $ret);
             if ($ret !== 0) fail(implode("\n", $out));
 
             echo json_encode([
@@ -293,90 +257,47 @@ sudo chmod 664 $envFile
             ]);
             exit;
 
-        /*
-        |--------------------------------------------------------------------------
-        | MIGRATE
-        |--------------------------------------------------------------------------
-        */
         case 'migrate':
-
             blockIfNoVendor($basePath);
-
-            exec("php \"$basePath/artisan\" migrate --force 2>&1", $out, $ret);
+            exec("$phpBin \"$basePath/artisan\" migrate --force 2>&1", $out, $ret);
             if ($ret !== 0) fail(implode("\n", $out));
 
             file_put_contents($migrationDoneFile, 'done');
-
-            echo json_encode([
-                'message' => '✔ Migrations completed',
-                'next' => 'seed'
-            ]);
+            echo json_encode(['message' => '✔ Migrations completed','next'=>'seed']);
             exit;
 
-        /*
-        |--------------------------------------------------------------------------
-        | SEED
-        |--------------------------------------------------------------------------
-        */
         case 'seed':
-
             blockIfNoVendor($basePath);
-
-            exec("php \"$basePath/artisan\" db:seed --force 2>&1", $out, $ret);
+            exec("$phpBin \"$basePath/artisan\" db:seed --force 2>&1", $out, $ret);
             if ($ret !== 0) fail(implode("\n", $out));
 
             file_put_contents($seedDoneFile, 'done');
-
-            echo json_encode([
-                'message' => '✔ Database seeded',
-                'next' => 'permissions'
-            ]);
+            echo json_encode(['message'=>'✔ Database seeded','next'=>'permissions']);
             exit;
 
-        /*
-        |--------------------------------------------------------------------------
-        | PERMISSIONS
-        |--------------------------------------------------------------------------
-        */
         case 'permissions':
-
-            foreach (['storage', 'bootstrap/cache'] as $dir) {
-                if (!is_writable("$basePath/$dir")) {
-                    fail("$dir is not writable");
-                }
+            foreach (['storage','bootstrap/cache'] as $dir) {
+                if (!is_writable("$basePath/$dir")) fail("$dir is not writable");
             }
-
-            echo json_encode([
-                'message' => '✔ Permissions OK',
-                'next' => 'finish'
-            ]);
+            echo json_encode(['message'=>'✔ Permissions OK','next'=>'finish']);
             exit;
 
-        /*
-        |--------------------------------------------------------------------------
-        | FINISH
-        |--------------------------------------------------------------------------
-        */
         case 'finish':
-
             file_put_contents($installedFlag, 'installed');
 
             $env = file_get_contents($envFile);
-            if (!str_contains($env, 'APP_INSTALLED=') || !str_contains($env, 'APP_INSTALLED=false')) {
+            if (!str_contains($env,'APP_INSTALLED=true')) {
                 $env .= "\nAPP_INSTALLED=true\n";
-                file_put_contents($envFile, $env);
+                file_put_contents($envFile,$env);
             }
 
-            echo json_encode([
-                'message' => "✔ Installation complete! <a href='/'>Open Application</a>",
-                'next' => null
-            ]);
+            echo json_encode(['message'=>"✔ Installation complete! <a href='/'>Open Application</a>",'next'=>null]);
             exit;
 
         default:
             fail("Invalid step");
 
-    } 
+    }
 
 } catch (Throwable $e) {
     fail($e->getMessage());
