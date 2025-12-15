@@ -254,23 +254,38 @@ try {
             $envExample = $basePath . '/.env.example';
             if (!file_exists($envExample)) fail(".env.example not found");
 
-            if (!file_exists($envFile) || !is_readable($envFile) || !is_writable($envFile)) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => "
-                    ❌ <strong>.env permission issue</strong><br><br>
+            // 🔹 Try to create .env if it does not exist
+            if (!file_exists($envFile)) {
+                if (!is_writable($basePath)) {
+                    fail("
+                        Base directory is not writable.<br><br>
+                        Please run:<br>
+                        <pre>
+                        sudo chown -R \$USER:www-data $basePath
+                        sudo chmod -R 775 $basePath
+                        </pre>
+                    ");
+                }
+
+                if (!copy($envExample, $envFile)) {
+                    fail("Failed to create .env file from .env.example");
+                }
+            }
+
+            // 🔹 Final permission check
+            if (!is_readable($envFile) || !is_writable($envFile)) {
+                fail("
+                    .env exists but is not writable.<br><br>
                     Please run:<br>
                     <pre>
                     sudo chown \$USER:www-data $envFile
                     sudo chmod 664 $envFile
                     </pre>
-                    Then retry.",
-                    'show_db_form' => false
-                ]);
-                exit;
+                ");
             }
 
-            $env = file_get_contents($envExample);
+            // 🔹 Update DB values
+            $env = file_get_contents($envFile);
             $env = preg_replace('/DB_HOST=.*/', 'DB_HOST=' . $config['host'], $env);
             $env = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE=' . $config['database'], $env);
             $env = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME=' . $config['username'], $env);
@@ -284,6 +299,7 @@ try {
                 'next' => nextStep($step)
             ]);
             exit;
+
 
         case 'key':
             // Capture artisan output
