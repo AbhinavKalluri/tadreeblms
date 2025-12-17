@@ -116,7 +116,7 @@
                 <div class="navbar-header float-left">
                     <a class="navbar-brand text-uppercase" href="{{ url('/') }}">
                         @if( isset($site_logo->value) )
-                       <img src="{{ asset( $site_logo->value ) }}" alt="logo">
+                       <img src="{{ asset('assets/img/logo.png') }}" alt="logo" class="logoimg">
                        @else
                         <img src="{{ asset('assets/img/logo.png') }}" alt="logo" class="logoimg">
                        @endif
