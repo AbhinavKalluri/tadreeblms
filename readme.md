@@ -1,50 +1,200 @@
-## Laravel 5.7 Boilerplate
+[README_TadreebLMS_UPDATED.md](https://github.com/user-attachments/files/24185613/README_TadreebLMS_UPDATED.md)
+# 🚀 TadreebLMS
 
-[![Latest Stable Version](https://poser.pugx.org/rappasoft/laravel-5-boilerplate/v/stable)](https://packagist.org/packages/rappasoft/laravel-5-boilerplate)
-[![Latest Unstable Version](https://poser.pugx.org/rappasoft/laravel-5-boilerplate/v/unstable)](https://packagist.org/packages/rappasoft/laravel-5-boilerplate) 
-[![StyleCI](https://styleci.io/repos/30171828/shield?style=plastic)](https://styleci.io/repos/30171828/shield?style=plastic)
-[![CircleCI](https://circleci.com/gh/rappasoft/laravel-5-boilerplate/tree/master.svg?style=svg)](https://circleci.com/gh/rappasoft/laravel-5-boilerplate/tree/master)
+TadreebLMS is a modern, open-source **Learning Management System (LMS)** built to support educational institutions, training organizations, and professional development programs. It enables seamless delivery of digital learning through structured courses, assessments, progress tracking, and certification.
 
-### Official Documentation
+**Our commitment is to develop future-ready leaders through advanced and innovative learning frameworks. We empower students, professionals, and executives with the strategic knowledge and adaptable skills essential for success in today’s fast-changing environment.**
 
-[Click here for the official documentation](http://laravel-boilerplate.com)
+---
 
-### Slack Channel
+## 🌍 About TadreebLMS
 
-Please join us in our Slack channel to get faster responses to your questions. Get your invite here: https://laravel-5-boilerplate.herokuapp.com
+TadreebLMS is designed to be **flexible, scalable, and customizable**, making it suitable for:
 
-### Laravel 5.6
+- Academic learning  
+- Corporate & professional training  
+- Skill development programs  
+- Online & blended learning  
 
-You can download the last build of Laravel 5.6 [here](https://github.com/rappasoft/laravel-5-boilerplate/tree/Legacy_5.6).
+As an **open-source platform**, TadreebLMS gives organizations full control over their learning infrastructure.
 
-### Laravel 5.5
+---
 
-You can download the last build of Laravel 5.5 [here](https://github.com/rappasoft/laravel-5-boilerplate/tree/Legacy_5.5).
+## 📚 Key Features
 
-### Introduction
+- User & Role Management (Admin, Instructor, Learner)  
+- Course & Enrollment Management  
+- Assessments & Evaluations  
+- Progress Tracking & Reports  
+- Certificate Generation  
+- Resource Library  
+- Multi-language Support (English, Arabic)  
+- Responsive & Secure Design  
 
-Laravel Boilerplate provides you with a massive head start on any size web application. It comes with a full featured access control system out of the box with an easy to learn API and is built on a Bootstrap foundation with a front and backend architecture. We have put a lot of work into it and we hope it serves you well and saves you time!
+---
 
-### Wiki
+## 🛠 Technology Stack
 
-Please view the [wiki](https://github.com/rappasoft/laravel-5-boilerplate/wiki) for a list of [features](https://github.com/rappasoft/laravel-5-boilerplate/wiki#features).
+- **Backend:** PHP / Laravel  
+- **Frontend:** HTML, CSS, JavaScript  
+- **Database:** MySQL  
+- **Web Server:** Apache  
+- **License:** GNU AGPLv3  
 
-### Issues
+---
 
-If you come across any issues please [report them here](https://github.com/rappasoft/Laravel-5-Boilerplate/issues).
+# 📦 Installation Guide
 
-### Contributing
+> **Recommended OS:** Ubuntu 20.04 / 22.04  
+> **Web Server:** Apache 2.x  
+> **PHP Version:** 8.2  
+> **Composer Version (Required):** 2.7.8  
 
-Thank you for considering contributing to the Laravel Boilerplate project! Please feel free to make any pull requests, or e-mail me a feature request you would like to see in the future to Anthony Rappa at rappa819@gmail.com.
+---
 
-### Security Vulnerabilities
+## 1️⃣ Update Server
 
-If you discover a security vulnerability within this boilerplate, please send an e-mail to Anthony Rappa at rappa819@gmail.com, or create a pull request if possible. All security vulnerabilities will be promptly addressed. Please reference [this page](https://github.com/rappasoft/laravel-5-boilerplate/wiki/7.-Security-Fixes) to make sure you are up to date.
+```bash
+sudo apt update && sudo apt upgrade -y
+```
 
-### Donations
+---
 
-If you would like to help the continued efforts of this project, any size [donations](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JJWUZ4E9S9SFG&lc=US&item_name=Laravel%205%20Boilerplate&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted) are welcomed and highly appreciated.
+## 2️⃣ Install Apache
 
-### License
+```bash
+sudo apt install apache2 -y
+sudo systemctl enable apache2
+sudo systemctl start apache2
+```
 
-MIT: [http://anthony.mit-license.org](http://anthony.mit-license.org)
+---
+
+## 3️⃣ Install PHP 8.2
+
+```bash
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
+```
+
+```bash
+sudo apt install php8.2 php8.2-cli php8.2-common php8.2-mbstring php8.2-xml php8.2-curl php8.2-zip php8.2-mysql php8.2-bcmath php8.2-gd -y
+```
+
+---
+
+## 4️⃣ Install Composer
+
+```bash
+cd /tmp
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php --version=2.7.8
+sudo mv composer.phar /usr/local/bin/composer
+composer --version
+```
+
+---
+
+## 5️⃣ Clone TadreebLMS
+
+```bash
+cd /var/www
+sudo git clone https://github.com/Tadreeb-LMS/tadreeblms.git
+```
+
+```bash
+sudo chown -R www-data:www-data /var/www/tadreeblms
+sudo find /var/www/tadreeblms -type d -exec chmod 755 {} \;
+sudo find /var/www/tadreeblms -type f -exec chmod 644 {} \;
+```
+
+```bash
+cd tadreeblms
+```
+
+---
+
+## 6️⃣ Setup Storage & Cache 
+
+```bash
+sudo mkdir -p bootstrap/cache
+
+sudo mkdir -p storage/framework/views
+sudo mkdir -p storage/framework/cache/data
+sudo mkdir -p storage/framework/sessions
+sudo mkdir -p storage/logs
+
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+sudo chown -R www-data:www-data public
+sudo chmod -R 775 public
+```
+
+---
+
+## 7️⃣ Install & Configure MySQL
+
+```bash
+sudo apt install mysql-server -y
+```
+
+```bash
+sudo mysql
+```
+
+```sql
+CREATE DATABASE laravel_db;
+CREATE USER 'laravel'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON laravel_db.* TO 'laravel'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+---
+
+## 8️⃣ Apache Virtual Host
+
+```bash
+sudo nano /etc/apache2/sites-available/tadreeblms.conf
+```
+
+```apache
+<VirtualHost *:80>
+    ServerName YOUR_DOMAIN
+    DocumentRoot /var/www/tadreeblms/public
+
+    <Directory /var/www/tadreeblms/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/tadreeblms_error.log
+    CustomLog ${APACHE_LOG_DIR}/tadreeblms_access.log combined
+</VirtualHost>
+```
+
+```bash
+sudo a2enmod rewrite
+sudo a2ensite tadreeblms.conf
+sudo systemctl reload apache2
+```
+
+---
+
+## 9️⃣ Access Application
+
+Open in browser:
+
+```
+http://YOUR_DOMAIN
+```
+
+Complete the web-based onboarding to finish setup.
+
+---
+
+## 📄 License
+
+Licensed under the **GNU Affero General Public License (AGPLv3)**.
