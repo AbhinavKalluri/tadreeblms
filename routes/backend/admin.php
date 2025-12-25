@@ -398,6 +398,9 @@ Route::group(['middleware' => 'role:teacher'], function () {
 
 Route::group(['middleware' => 'role:student'], function () {
 
+    
+    Route::get('get-certificates', 'CertificateController@getCertificates')->name('certificates.get');
+
     Route::post('apply-certificate', 'CertificateController@applyCertificate')->name('certificates.apply');
     Route::get('certificates/generate/{course_id}/{user_id}', 'CertificateController@generateCertificate')->name('certificates.generate');
     //==== Certificates ====//
