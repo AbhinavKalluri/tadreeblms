@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
             $('#due_date').val(null);
 
             $('#advace_filter').submit();
-            //location.reload(`{{ route('admin.employee.internal-attendence-report') }}`)
+            //location.reload(`{{ route('admin.employee.internal-attendence-report') }}`) local
         })
 
         $('#advace_filter').submit(function (e) {
