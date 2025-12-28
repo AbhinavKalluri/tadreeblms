@@ -1,4 +1,3 @@
-
 # 🚀 TadreebLMS
 
 TadreebLMS is a modern, open-source **Learning Management System (LMS)** built to support educational institutions, training organizations, and professional development programs. It enables seamless delivery of digital learning through structured courses, assessments, progress tracking, and certification.
