@@ -41,11 +41,13 @@ class UserController extends Controller
      */
     public function index(ManageUserRequest $request)
     {
-        if (!\Gate::allows('user_access')) {
+        //dd("hh");
+        if (!\Gate::allows('user_management_access')) {
             return abort(401);
         }
         $roles = Role::select('id','name')->get();
 
+        //dd($this->userRepository->getActivePaginated(25, 'id', 'asc'));
 
         return view('backend.auth.user.index',compact('roles'))
             ->withUsers($this->userRepository->getActivePaginated(25, 'id', 'asc'));
@@ -58,11 +60,14 @@ class UserController extends Controller
      */
     public function getData(Request $request)
     {
+
+        
         if($request->role &&  $request->role != ""){
             $users = User::role($request->role)->with('roles', 'permissions', 'providers')
                 ->orderBy('users.created_at', 'desc');
         }else{
-            $users = User::role(1)->with('roles', 'permissions', 'providers')
+            $users = User::with('roles', 'permissions', 'providers')
+                ->whereNull('employee_type')
                 ->orderBy('users.created_at', 'desc');
         }
 
@@ -174,6 +179,7 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user)
     {
+        
         $this->userRepository->update($user, $request->only(
             'first_name',
             'last_name',
