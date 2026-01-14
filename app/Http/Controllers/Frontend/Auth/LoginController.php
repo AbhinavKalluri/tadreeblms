@@ -15,6 +15,7 @@ use App\Repositories\Frontend\Auth\UserSessionRepository;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth as LaravelAuth;
 use Session;
 use Illuminate\Support\Facades\App;
 
@@ -27,6 +28,10 @@ class LoginController extends Controller
      */
     public function redirectPath()
     {
+        if (auth()->check() && auth()->user()->isAdmin()) {
+            return '/admin/dashboard';
+        }
+
         return route(home_route());
     }
 
@@ -43,13 +48,13 @@ class LoginController extends Controller
         if (request()->ajax()) {
             return [
                 'socialLinks' => (new Socialite)->getSocialLinks(),
-                'captcha_question' => "$a + $b = ?"
+                'captcha_question' => "$a + $b = ?",
             ];
         }
 
         return redirect('/')->with([
             'show_login' => true,
-            'captcha_question' => "$a + $b = ?"
+            'captcha_question' => "$a + $b = ?",
         ]);
     }
 
@@ -66,126 +71,106 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|max:255',
-            'password' => 'required|min:6',
-            'captcha' => 'required'
-        ], [
-            'captcha.required' => 'Please solve the captcha'
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'email' => 'required|email|max:255',
+                'password' => 'required|min:6',
+                'captcha' => 'required',
+            ],
+            [
+                'captcha.required' => 'Please solve the captcha',
+            ]
+        );
 
-        if ($validator->passes()) {
-
-            // ✅ CAPTCHA CHECK
-            if ((int) $request->captcha !== (int) Session::get('captcha_answer')) {
-                return response([
-                    'success' => false,
-                    'message' => 'Invalid captcha answer'
-                ], Response::HTTP_FORBIDDEN);
-            }
-
-            $credentials = $request->only($this->username(), 'password');
-            $authSuccess = \Illuminate\Support\Facades\Auth::attempt(
-                $credentials,
-                $request->has('remember')
-            );
-
-            //dd($this->username(), $authSuccess);
-
-            if ($authSuccess) {
-                $request->session()->regenerate();
-
-                //dd(auth()->user()->active);
-
-                if (auth()->user()->active > 0) {
-
-                    if (isset(auth()->user()->employee_type)) {
-                        if ((string) auth()->user()->employee_type == '') {
-                            Session::put('setvaluesession', 1);
-                        } elseif (auth()->user()->employee_type == 'internal') {
-                            Session::put('setvaluesession', 2);
-
-                            $default_language = auth()->user()->fav_lang ?? 'english';
-                            if ($default_language == 'arabic') {
-                                App::setLocale('ar');
-                                session(['locale' => 'ar']);
-                            }
-                        } elseif (auth()->user()->employee_type == 'external') {
-                            Session::put('setvaluesession', 3);
-                        }
-                    }
-
-                    $redirect = auth()->user()->isAdmin()
-                        ? '/user/dashboard'
-                        : ($request->redirect_url ?? '/');
-
-                    auth()->user()->update([
-                        'last_login_at' => Carbon::now()->toDateTimeString(),
-                        'last_login_ip' => $request->getClientIp()
-                    ]);
-
-                    if ($request->ajax()) {
-                        return response([
-                            'success' => true,
-                            'redirect' => $redirect
-                        ], Response::HTTP_OK);
-                    }
-
-                    return redirect('/user/dashboard');
-                }
-
-                \Illuminate\Support\Facades\Auth::logout();
-
-                return response([
-                    'success' => false,
-                    'message' => 'Login failed. Account is not active'
-                ], Response::HTTP_FORBIDDEN);
-            }
-
+        if ($validator->fails()) {
             return response([
                 'success' => false,
-                'message' => 'Invalid email or password'
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // ✅ CAPTCHA CHECK
+        if ((int) $request->captcha !== (int) Session::get('captcha_answer')) {
+            return response([
+                'success' => false,
+                'message' => 'Invalid captcha answer',
             ], Response::HTTP_FORBIDDEN);
+        }
+
+        $credentials = $request->only($this->username(), 'password');
+
+        if (LaravelAuth::attempt($credentials, $request->has('remember'))) {
+            return $this->sendLoginResponse($request);
         }
 
         return response([
             'success' => false,
-            'errors' => $validator->errors()
-        ]);
+            'message' => 'Login failed. Account not found',
+        ], Response::HTTP_FORBIDDEN);
     }
 
     /**
-     * After authentication hook
+     * The user has been authenticated.
+     * Role-based redirection is handled here.
      */
     protected function authenticated(Request $request, $user)
     {
+        // Confirmation & active checks
         if (! $user->isConfirmed()) {
             auth()->logout();
+            throw new GeneralException(__('exceptions.frontend.auth.confirmation.pending'));
+        }
 
-            if ($user->isPending()) {
-                throw new GeneralException(__('exceptions.frontend.auth.confirmation.pending'));
-            }
-
-            throw new GeneralException(
-                __('exceptions.frontend.auth.confirmation.resend', [
-                    'url' => route(
-                        'frontend.auth.account.confirm.resend',
-                        $user->{$user->getUuidName()}
-                    )
-                ])
-            );
-        } elseif (! $user->isActive()) {
+        if (! $user->isActive()) {
             auth()->logout();
             throw new GeneralException(__('exceptions.frontend.auth.deactivated'));
         }
 
+        // Session values by employee type
+        if (isset($user->employee_type)) {
+            if (empty($user->employee_type)) {
+                Session::put('setvaluesession', 1);
+            } elseif ($user->employee_type === 'internal') {
+                Session::put('setvaluesession', 2);
+
+                if (($user->fav_lang ?? 'english') === 'arabic') {
+                    App::setLocale('ar');
+                    session(['locale' => 'ar']);
+                }
+            } elseif ($user->employee_type === 'external') {
+                Session::put('setvaluesession', 3);
+            }
+        }
+
+        // Update login stats
+        $user->update([
+            'last_login_at' => Carbon::now()->toDateTimeString(),
+            'last_login_ip' => $request->getClientIp(),
+        ]);
+
         event(new UserLoggedIn($user));
 
         if (config('access.users.single_login')) {
-            resolve(UserSessionRepository::class)->clearSessionExceptCurrent($user);
+            resolve(UserSessionRepository::class)
+                ->clearSessionExceptCurrent($user);
         }
 
-        return redirect()->intended($this->redirectPath());
+        // Final redirect logic
+        if ($user->isAdmin()) {
+            return redirect('/admin/dashboard');
+        }
+
+        $redirect = $request->redirect_url ?? $this->redirectPath();
+
+        if ($request->ajax()) {
+            return response([
+                'success' => true,
+                'redirect' => $redirect,
+            ], Response::HTTP_OK);
+        }
+
+        return redirect()->intended($redirect);
     }
 
     /**
