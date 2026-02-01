@@ -18,7 +18,7 @@
 @include('backend.includes.partials.course-steps', ['step' => 3, 'course_id' => $course_id, 'course' => $course ?? null ])
 
 
-<div class="pb-3 d-flex justify-content-between align-items-center">
+<div class="pb-3 d-flex justify-content-between align-items-center addcourseheader">
        <h4>
            @lang('labels.backend.questions.create')
        </h4>
@@ -38,8 +38,8 @@
         <input type="hidden" id="temp_id" name="temp_id" value="{{ $temp_id }}">
         <input type="hidden" id="action_btn" name="action_btn" value="">
         <input type="hidden" id="course_id" name="course_id" value="{{ $course_id }}">
-        <div class="row">
-            <div class="col-12">
+        <div class="row mt-3">
+            <div class="col-12 col-md-6">
                 <label>Test</label>
                 <div class="custom-select-wrapper">
 
@@ -54,9 +54,8 @@
     </span>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-12 mt-3">
+         
+            <div class="col-12 col-md-6">
                 <label>Question Type</label>
                 <div class="custom-select-wrapper">
 
@@ -71,50 +70,58 @@
                 </div>
             </div>
         </div>
+
+
+
         <div class="row">
-            <div class="col-12 mt-3">
+          <div class="col-12 col-md-6 mt-3 notextarea"> 
                 <label>Question</label>
                 <textarea class="form-control editor" rows="3" name="question" id="question" required="required"></textarea>
             </div>
-        </div>
-        <div class="cb_question_setup">
-            
-            <div class="row">
-                <div class="col-12 col-md-6 mt-3">
+         
+                <div class="col-12 col-md-6"> 
+                     <div class="mt-3 notextarea">
                     <label>Option</label>
                     <textarea class="form-control editor" rows="3" name="option" id="option" required="required"></textarea>
-                    <button type="button" id="add_option" class="btn btn-primary pull-right mt-2">Add Option</button>
+                    <div class="addoptbtn">
+                    <button type="button" id="add_option" class="btn btn-primary mt-2">Add Option</button>
+                    </div>
+                    <div class="addoptiontable mt-1">
+                    <div id="option-area" class="pt-1"></div>
+    </div>
                 </div>
-                <div class="col-12 col-md-6">
-                    <div id="option-area" class="pt-4"></div>
+              
                 </div>
+               
             </div>
+            <div class="cb_question_setup">
             <div class="row">
-                <div class="col-12 mt-3">
+                 <div class="col-12 col-md-5 notextarea">
                     <label>Solution</label>
                     <textarea class="form-control textarea-col editor" rows="3" name="solution" id="solution"></textarea>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-12 mt-3">
+             
+             <div class="col-12 col-md-2">
                     <label>Marks</label>
                     <input type="number" class="form-control" name="marks" id="marks" placeholder="Enter Marks" required />
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-12 mt-3">
+             
+                <div class="col-12 col-md-5 notextarea">
                     <label>Comment</label>
                     <textarea class="form-control textarea-col editor" rows="3" name="comment" id="comment"></textarea>
                 </div>
             </div>
         </div>
+        </div>
     </div>
+     <div class="btmbtns">
+        <div class="row">
     <div class="col-12 mt-5 buttons">
-     {!! Form::button('Save & Add More', ['class' => 'frm_submit add-btn form-group', 'id'=>'save_and_add_more', 'value'=>'save_and_add_more']) !!}
+     {!! Form::button('Save & Add More', ['class' => 'frm_submit add-btn', 'id'=>'save_and_add_more', 'value'=>'save_and_add_more']) !!}
      <div class="text-right">
         <button
             type="button"
-            class="frm_submit cancel-btn mb-4 form-group"
+            class="frm_submit cancel-btn"
             id="save_as_draft"
             value="Save As Draft">
             Save As Draft
@@ -122,14 +129,14 @@
 
         <button
             type="button"
-            class="frm_submit add-btn form-group"
+            class="frm_submit add-btn"
             id="save"
             value="Next">
             Next
         </button>
     </div>
-    </div>
-    
+    </div></div>
+     </div>
 </div>
 
 
