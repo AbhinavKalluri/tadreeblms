@@ -20,14 +20,7 @@
     .question-builder-container {
         padding: 20px 0;
     }
-
-    .card {
-        border-radius: 12px;
-        border: none;
-        box-shadow: var(--card-shadow);
-        transition: transform 0.2s ease-in-out;
-        margin-bottom: 24px;
-    }
+ 
 
     .card-header {
         background-color: #fff !important;
@@ -184,7 +177,7 @@
 @include('backend.includes.partials.course-steps', ['step' => 3, 'course_id' => $course_id, 'course' => $course ?? null ])
 
 
-<div class="pb-3 d-flex justify-content-between align-items-center">
+ <div class="pb-3 d-flex justify-content-between align-items-center addcourseheader">
        <h4>
            @lang('labels.backend.questions.create')
        </h4>
@@ -249,13 +242,17 @@
                      <div class="mt-3 notextarea">
                     <label>Option</label>
                     <textarea class="form-control editor" rows="3" name="option" id="option" required="required"></textarea>
-                    <button type="button" id="add_option" class="btn btn-primary pull-right mt-2">Add Option</button>
+                    <div class="addoptbtn">
+                    <button type="button" id="add_option" class="btn btn-primary mt-2">Add Option</button>
                 </div>
-                <div class="col-12 col-md-6">
-                    <div id="option-area" class="pt-4"></div>
+              <div class="addoptiontable ">
+                    <div id="option-area" class=""></div>
                 </div>
-               
+               </div>
             </div>
+</div>
+
+
             <div class="row">
                  <div class="col-12 col-md-5 notextarea">
                     <label>Solution</label>
@@ -271,8 +268,17 @@
                     <label>Comment</label>
                     <textarea class="form-control textarea-col editor" rows="3" name="comment" id="comment"></textarea>
 
-            <!-- Options Builder Card -->
-            <div class="card" id="options-card">
+         
+
+         
+        </div>
+        </div>
+
+<!--
+<div class="row">
+        <div class="col-md-6">
+     Options Builder Card  
+            <div class="" id="options-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="fa fa-list-ul"></i> Options Builder</h5>
                     <button type="button" class="btn btn-sm btn-outline-primary" id="add_option_btn">
@@ -280,7 +286,7 @@
                     </button>
                 </div>
                 <div class="card-body">
-                    <!-- New Option Input (Floating) -->
+                   New Option Input (Floating)  
                     <div id="option-input-wrapper" class="mb-4 bg-light p-3 rounded shadow-sm" style="display:none;">
                         <label>New Option Content</label>
                         <textarea class="form-control editor" name="option_editor" id="option_editor"></textarea>
@@ -298,9 +304,10 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Solution & Comments Card -->
-            <div class="card">
+        </div>
+        <div class="col-md-6">
+     Solution & Comments Card  
+            <div class=" ">
                 <div class="card-header">
                     <h5><i class="fa fa-check-circle"></i> Explanation & Feedback</h5>
                 </div>
@@ -316,9 +323,12 @@
                 </div>
             </div>
         </div>
-
-        <!-- Right Panel: Live Preview -->
-        <div class="col-lg-4">
+</div>
+-->
+<!--
+<div class="row">
+         Right Panel: Live Preview  
+        <div class="col-lg-12">
             <div class="preview-panel">
                 <div class="card preview-card">
                     <div class="preview-header">
@@ -334,7 +344,7 @@
                             <span class="text-muted italic">Question content will appear here...</span>
                         </div>
                         <div id="preview-options" class="options-preview">
-                            <!-- Preview options will appear here -->
+                            Preview options will appear here  
                         </div>
                         <div id="preview-hint" class="mt-3 d-none">
                             <div class="alert alert-warning py-2 small">
@@ -350,11 +360,17 @@
         </div>
         </div>
     </div>
+</div>
+-->
+
+
      <div class="btmbtns">
         <div class="row">
     <div class="col-12 mt-5 buttons">
+        
      {!! Form::button('Save & Add More', ['class' => 'frm_submit add-btn', 'id'=>'save_and_add_more', 'value'=>'save_and_add_more']) !!}
-     <div class="text-right">
+    
+     <span class="text-right pull-right">
         <button
             type="button"
             class="frm_submit cancel-btn"
@@ -370,9 +386,10 @@
             value="Next">
             Next
         </button>
-    </div>
+</span>
     </div>
     
+</div>
 </div>
 
 
@@ -400,6 +417,11 @@
 <script type="text/javascript">
     var options = [];
     var currentOptionId = null;
+
+function removeOptions(pos) {
+        options.splice(pos, 1);
+        showOptions();
+    }
 
     $(document).ready(function() {
         // Initialize CKEditors
@@ -512,6 +534,88 @@
         renderOptionsList();
         updatePreview();
     }
+
+     function showOptions(show_remove_options = true) {
+        if (show_remove_options == true) {
+            var option_text = '<table class="table table-bordered table-striped"><tbody><tr><th>Option</th>';
+            var drag_drop_question_type = $('#question_type').val();
+            option_text += '<th>Is Right</th></tr>';
+            for (var i = 0; i < options.length; ++i) {
+                option = options[i];
+                option_text += '<tr>';
+                option_text += '<td>' + option[0] + '</td>';
+                if (parseInt($('#question_type').val()) == 1) {
+                    option_text += '<td><input type="radio" ';
+                } else {
+                    option_text += '<td><input type="checkbox" class="cb_checkbox_mark" ';
+                }
+                if (option[1] === 1) {
+                    option_text += 'checked="checked"';
+                }
+                option_text += ' onclick="markAsCorrectOption(' + i + ')"></td>';
+                option_text += '<td><a href="javascript:void(0);"  onclick="removeOptions(' + i + ')" class="btn btn-danger remove"><i class="la la-trash"></i>Remove</a>';
+                option_text += '</tr>'
+            }
+            option_text += '</tbody></table>';
+            $('#option-area').html(option_text);
+        } else {
+            var option_text = '<table class="table table-bordered table-striped"><tbody><tr><th>Option</th><th>Is Right</th></tr>';
+            for (var i = 0; i < options.length; ++i) {
+                option = options[i];
+                option_text += '<tr>';
+                option_text += '<td>' + option[0] + '</td>';
+                option_text += '<td><input type="radio" ';
+                if (option[1] === 1) {
+                    option_text += 'checked="checked"';
+                }
+                option_text += ' onclick="markAsCorrectOption(' + i + ',false)"></td>';
+                option_text += '</tr>'
+            }
+            option_text += '</tbody></table>';
+            document.getElementById('option-area').innerHTML = option_text;
+        }
+        addImgClass();
+    }
+    function addOptions() {
+        var option = CKEDITOR.instances["option"].getData();
+        options_length = (options != null && options != undefined) ? options.length : 0;
+        options.push([option.trim(), 0]);
+        CKEDITOR.instances["option"].setData('');
+    }
+
+    //$(document).on('click', "#add_option", function() {
+        //if (CKEDITOR.instances["option"].getData() != "") {
+            // if ((options.length + 1) <= 4) {
+                //addOptions();
+            // } else {
+            //     alert('You can use only 4 Options.');
+            // }
+       // }
+       // showOptions();
+   // });
+
+ $(document).on('click', "#add_option", function() {
+    // 1. Get data from CKEditor
+    var rawContent = CKEDITOR.instances["option"].getData();
+
+    // 2. Strip HTML tags to see if there is actually any text
+    // This removes <p>, <br>, and converts &nbsp; to empty space
+    var plainText = rawContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+
+    // 3. Validation Check
+    if (plainText === "") {
+        alert("Please enter text for the option before adding it.");
+        CKEDITOR.instances["option"].focus();
+        return false; // STOP the execution here
+    }
+
+    // 4. If it's NOT empty, proceed
+    addOptions();
+    showOptions();
+    
+    // 5. Clear the editor for the next one
+    CKEDITOR.instances["option"].setData('');
+});
 
     function markCorrect(index) {
         const type = $('#question_type').val();
