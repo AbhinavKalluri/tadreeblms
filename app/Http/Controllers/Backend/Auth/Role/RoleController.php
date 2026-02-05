@@ -57,13 +57,8 @@ class RoleController extends Controller
      */
     public function create(ManageRoleRequest $request)
     {
-        $permissions = $this->permissionRepository->get()->groupBy(function($permission) {
-            $parts = explode('_', $permission->name);
-            $action = array_pop($parts); // Remove the action
-            return implode('_', $parts); // Module name
-        });
         return view('backend.auth.role.create')
-            ->withGroupedPermissions($permissions);
+            ->withPermissions($this->permissionRepository->get());
     }
 
     /**
