@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use App\Ldap\LdapUser;
 use App\Services\LicenseService;
 use App\Exports\EmployeeSampleExport;
 use App\Imports\EmployeeImport;
@@ -66,6 +67,16 @@ class EmployeeController extends Controller
 
         $status = $request->get('status');
         return view('backend.employee.index', [
+            'status' => $status
+        ]);
+    }
+
+    
+    public function ldap_users_list(Request $request)
+    {
+        //dd("fghff");
+        $status = $request->get('status');
+        return view('backend.employee.ldap_user_index', [
             'status' => $status
         ]);
     }
@@ -307,6 +318,26 @@ class EmployeeController extends Controller
             ->rawColumns(['actions', 'department', 'position', 'image', 'status'])
             ->make();
     }
+
+    
+    public function get_ldap_data(Request $request)
+    {
+        $ldapUsers = LdapUser::query()->get();
+
+        $teachers = $ldapUsers->map(function ($user, $i) {
+            return [
+                'id' => ++$i,
+                'name'     => $user->getFirstAttribute('cn'),
+                'email'    => $user->getFirstAttribute('mail'),
+                'username' => $user->getFirstAttribute('uid'),
+            ];
+        })->values(); // 🔥 VERY IMPORTANT
+
+        return DataTables::of($teachers)->make(true);
+    }
+
+
+
 
     /**
      * Show the form for creating new Category.
