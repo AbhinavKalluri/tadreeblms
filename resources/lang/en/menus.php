@@ -5,7 +5,7 @@ return array(
   array(
     'sidebar' =>
     array(
-      'roles_mgt' => 'Permission Setting',
+      'roles_mgt' => 'Roles Permissions',
       'Invitations' => 'Invitations',
       'Send-Email-Notification' => 'Send Email Notification',
       'My-Assignments' => 'My Assignments',
@@ -69,6 +69,7 @@ return array(
         'social-login' => 'Social Login',
         'zoom_setting' => 'Zoom Setting',
         'landing_page_setting' => 'Landing Page Setting',
+        'license' => 'License Settings',
         'smtp' => 'Email Settings (SMTP)',
       ),
       'debug-site' =>
@@ -114,7 +115,7 @@ return array(
       ),
       'teachers' =>
       array(
-        'title' => 'Teachers',
+        'title' => 'Trainers',
       ),
       'hero-slider' =>
       array(
@@ -237,7 +238,7 @@ return array(
     ),
     'access' =>
     array(
-      'title' => 'Access',
+      'title' => 'User Management',
       'roles' =>
       array(
         'management' => 'Role Management',
